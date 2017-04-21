@@ -1,0 +1,21 @@
+CREATE VIEW view_NY_18 AS 
+	SELECT cust, sum(quant), COUNT(*), sum(quant)/COUNT(*) AS avg_NY
+	FROM sales
+	Where sales.state = 'NY'
+	Group By cust;
+
+CREATE VIEW view_NJ_18 AS 
+	SELECT cust, sum(quant), COUNT(*), sum(quant)/COUNT(*) AS avg_NJ
+	FROM sales
+	Where sales.state = 'NJ'
+	Group By cust;
+	
+CREATE VIEW view_CT_18 AS 
+	SELECT cust, sum(quant), COUNT(*), sum(quant)/COUNT(*) AS avg_CT
+	FROM sales
+	Where sales.state = 'CT'
+	Group By cust;
+
+SELECT view_NY_18.cust, view_NY_18.avg_NY, view_NJ_18.avg_NJ, view_CT_18.avg_CT
+FROM view_NY_18 Inner Join view_NJ_18 ON view_NY_18.cust=view_NJ_18.cust Inner Join view_CT_18 ON view_NJ_18.cust=view_CT_18.cust
+WHERE view_NY_18.avg_NY > view_CT_18.avg_CT AND view_NY_18.avg_NY > view_NJ_18.avg_NJ
