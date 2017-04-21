@@ -1,0 +1,43 @@
+CREATE VIEW view_NY_5 AS 
+	SELECT cust, quant 
+	FROM sales 
+	WHERE sales.state = 'NY' 
+	GROUP BY cust, quant
+	;
+
+CREATE VIEW view_CT_5 AS 
+	SELECT cust, quant 
+	FROM sales 
+	WHERE sales.state = 'CT' 
+	GROUP BY cust, quant
+	;
+
+CREATE VIEW view_NJ_5 AS 
+	SELECT cust, quant
+	FROM sales 
+	WHERE sales.state = 'NJ' 
+	GROUP BY cust, quant
+	;
+
+
+SELECT view_NY_5.cust,sum(view_NY_5.quant), count(view_NY_5.cust), sum(view_CT_5.quant), count(view_CT_5.cust), sum(view_NJ_5.quant), count(view_NJ_5.cust)
+FROM view_NY_5, view_CT_5, view_NJ_5
+WHERE view_NY_5.cust=view_CT_5.cust 
+	AND view_NY_5.cust=view_NJ_5.cust
+	AND count(view_NY_5.cust) IN (
+	SELECT cust, COUNT(*)
+	FROM view_NY_5
+	GROUP BY cust
+	)
+GROUP BY view_NY_5.cust
+HAVING sum(view_NY_5.quant)/count(view_NY_5.cust)>sum(view_CT_5.quant)/count(view_CT_5.cust)
+	AND sum(view_NY_5.quant)/count(view_NY_5.cust)>sum(view_NJ_5.quant)/count(view_NJ_5.cust)
+
+
+
+
+
+
+SELECT cust, COUNT(*)
+	FROM sales
+	GROUP BY cust

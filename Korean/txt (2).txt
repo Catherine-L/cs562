@@ -1,0 +1,381 @@
+/*
+* === Information for CS561 Assignment # 2 ===============================================
+* ====Name: yimingchen   ID: 10411793 ======
+* Instruction 
+*  |-- If you are using Eclipse, now hit "F11" key on your keyboard to see all 3 tables. 
+*  |-- If you are using other IDE, then run the file directly to see all 3 tables. 
+*/
+import java.sql.*;	
+import java.util.Vector;
+
+public class sdap {
+	
+	public static void main(String[] args)
+	{
+		String usr ="postgres"; // set your user name
+		String pwd ="qaz7205039";    // set your password
+		String url ="jdbc:postgresql://localhost:5432/postgres";
+
+		//=== Arguments Definition ========================================================
+				String space = "";		// for NULL record of date 
+				String customer, product;
+				int mm, quant; 				// month, quantity
+				int sum=0, count=0;		// Temporary arguments: sum, count, average.
+				int custAvg,otrprodavg,otrcustavg; 
+				int lenCust, lenProd, lenCustAvg, lenOtrprodAvg, lenOtrcustAvg; // length of str
+				String monthstr,prestr,nextstr,pretotalstr,nexttotalstr;
+				int lenmonth,lenpre,lennext,lenpretotal,lennexttotal;
+				String custAvgStr, otrprodAvgStr, otrcustAvgStr; 
+				boolean matchCustProd, matchprod;	// mark if find the current grouup
+				//--- part # 1 of avgs ----------
+				Vector<String> cust = new Vector<String>(0); // cust for local average
+				Vector<String> prod = new Vector<String>(0);
+				Vector<Integer> custprodcount= new Vector<Integer>(0); 
+				Vector<Integer> custprodsum = new Vector<Integer>(0); 
+				
+				//--- part # 2 -----------------
+				//this is origianl table
+				Vector<String> custmonth = new Vector<String>(0); // cust for local average
+				Vector<String> prodmonth = new Vector<String>(0);
+				Vector<Integer> custprodmonthcount= new Vector<Integer>(0); 
+				Vector<Integer> custprodmonthsum = new Vector<Integer>(0); 
+				Vector<Integer> c_p_month  = new Vector<Integer>(0);
+				// part2 ------ 12 month table-----------------------
+				Vector<String> cust2 = new Vector<String>(0);
+				Vector<String> prod2 = new Vector<String>(0);
+				Vector<Integer> month2   = new Vector<Integer>(0); 
+				//Vector<Integer> monthcount2 = new Vector<Integer>(0); 
+				//Vector<Integer> monthsum2 = new Vector<Integer>(0); 
+				
+				//----part 3---------------------------------------
+				Vector<String> prodonly = new Vector<String>(0);
+				Vector<Integer> prod_month   = new Vector<Integer>(0); 
+				Vector<Integer> prod_monthcount= new Vector<Integer>(0); 
+				Vector<Integer> prod_monthsum = new Vector<Integer>(0); 
+				Vector<Integer> prod_monthmax = new Vector<Integer>(0); 
+				//--------------------------------------------------
+				//this part generate 12 month table 
+				Vector<String> prod3 = new Vector<String>(0);
+				Vector<Integer> month3   = new Vector<Integer>(0); 
+				Vector<Integer> monthavg3 = new Vector<Integer>(0); 
+				Vector<Integer> monthmax3 = new Vector<Integer>(0); 
+				//---------------------------------------------
+				Vector<Integer> pretotal = new Vector<Integer>(0); 
+				Vector<Integer> nexttotal = new Vector<Integer>(0); 
+				//=== End of Arguments definition =================================================
+				try{
+					Class.forName("org.postgresql.Driver");
+					System.out.println("Success loading Driver!");
+				}
+				catch(Exception e){
+					System.out.println("Fail loading Driver!");
+					e.printStackTrace();
+				}
+				try{
+					Connection conn = DriverManager.getConnection(url, usr, pwd);
+					System.out.println("Success connecting server!");
+
+					Statement stmt = conn.createStatement();
+					ResultSet rs = stmt.executeQuery("SELECT * FROM Sales");
+					
+					while (rs.next()) // read one row from database table 
+					{
+						//=== My program =================================================			
+						customer = rs.getString("cust");
+						product = rs.getString("prod"); 
+						mm = rs.getInt("month"); 
+						quant = rs.getInt("quant"); 
+						//--- # 1 ------------------------------------------------------------------
+						if(cust.isEmpty()) { // initiate all vectors
+							cust.add(customer);	prod.add(product);
+							custprodcount.add(1); custprodsum.add(quant);
+						
+						}
+						else
+						{
+							matchCustProd = false; // reset finding flag. Do NOT separate the following finding: bcz c & p are both Keys
+						for(int i = 0; i < cust.size(); i++){		// find the current (cust & prod & state)
+							if(cust.get(i).equals(customer) && prod.get(i).equals(product)){ 
+								count = custprodcount.get(i) + 1;
+								sum =   custprodsum.get(i) + quant;
+								custprodcount.set(i, count); custprodsum.set(i, sum); 
+								matchCustProd = true; 
+								break;
+							}			// find the current (cust & prod)
+						}
+						if(!matchCustProd){
+							cust.add(customer); prod.add(product); 
+							custprodcount.add(1); custprodsum.add(quant); 
+						}
+						count=0;sum=0;
+						}
+						//--- # 2 ------------------------------------------------------------------
+				      	if(custmonth.isEmpty()) { // initiate all vectors
+							custmonth.add(customer);prodmonth.add(product); c_p_month.add(mm);
+							custprodmonthcount.add(1); custprodmonthsum.add(quant);
+						
+						}
+						else
+						{
+							matchCustProd = false; 
+						for(int i = 0; i < custmonth.size(); i++){		// find the current (cust & prod & month)
+							if(custmonth.get(i).equals(customer) && prodmonth.get(i).equals(product)&&c_p_month.get(i).equals(mm)){ 
+								count = custprodmonthcount.get(i) + 1;
+								sum =   custprodmonthsum.get(i) + quant;
+								custprodmonthcount.set(i, count); custprodmonthsum.set(i, sum); 
+								matchCustProd = true; 
+								break;
+							}			// find the current (cust & prod & month)
+						}
+						if(!matchCustProd){
+							custmonth.add(customer); prodmonth.add(product); c_p_month.add(mm);
+							custprodmonthcount.add(1); custprodmonthsum.add(quant); 
+						}
+						count=0;sum=0;
+						}
+						//--- # 3 ------------------------------------------------------------------
+						if(prodonly.isEmpty()) { // initiate all vectors
+							prodonly.add(product); prod_month.add(mm);
+							prod_monthcount.add(1); prod_monthsum.add(quant);prod_monthmax.add(quant);
+						}
+						else
+							{matchprod = false; 
+						for(int i = 0; i < prodonly.size(); i++){		
+							if(prodonly.get(i).equals(product) && prod_month.get(i).equals(mm)){ 
+								if(quant>prod_monthmax.get(i))prod_monthmax.set(i, quant);    //get max
+								count = prod_monthcount.get(i) + 1;
+								sum =   prod_monthsum.get(i) + quant;
+								prod_monthcount.set(i, count); prod_monthsum.set(i, sum); //get sum and count
+								matchprod = true; 
+								break;
+							}			
+						}
+						if(!matchprod){                                    //if not exist ,add new 
+							prodonly.add(product); prod_month.add(mm);
+							prod_monthcount.add(1); prod_monthsum.add(quant); prod_monthmax.add(quant);
+						}
+						count=0;sum=0;
+							}
+						
+						
+					} 					
+					//=== table 1 ====================================================================================
+					System.out.println("CUSTOMER  PRODUCT THE_AVG  OTHER_PROD_AVG  OTHER_CUST_AVG");
+					System.out.println("========  ======= =======  ===============  =============="); 
+					for(int i = 0; i < cust.size(); i++) {  // compute the average based on sum and count
+						customer = cust.get(i); 
+						product = prod.get(i); 
+						//--- CUST_AVG ---------------------------------------------------
+						custAvg = custprodsum.get(i) / custprodcount.get(i);
+						//--- OTHER_prod_AVG --------------------------------------------
+						for(int j = 0; j < cust.size(); j++){
+							if(cust.get(j).equals(customer) && !prod.get(j).equals(product)){
+								sum =   custprodsum.get(j)+sum; 
+								count = custprodcount.get(j)+count; 
+							}
+						}
+						otrprodavg = sum /count; 
+						sum = 0; count = 0; // reset Sum and Count.
+						//--- OTHER_CUST_AVG ---------------------------------------------
+						for(int j = 0; j < cust.size(); j++){
+							if(!cust.get(j).equals(customer) && prod.get(j).equals(product)){
+								sum =   custprodsum.get(j)+sum; 
+								count = custprodcount.get(j)+count; 
+							}
+						}
+						otrcustavg = sum /count; 
+						sum = 0; count = 0; // reset Sum and Count.
+						//------------------------------------------------------
+						// formation strings
+						custAvgStr = String.valueOf(custAvg); 
+						otrprodAvgStr = String.valueOf(otrprodavg);
+						otrcustAvgStr = String.valueOf(otrcustavg); 
+						lenCust = customer.getBytes().length;
+						lenProd = product.getBytes().length;
+						lenCustAvg = custAvgStr.getBytes().length; 
+						lenOtrprodAvg = otrprodAvgStr.getBytes().length;
+						lenOtrcustAvg = otrcustAvgStr.getBytes().length; // length of str
+						if(lenCust < 8){ for(int j = lenCust; j < 10; j++) space += " "; 
+							customer = customer + space; space = "";
+						}
+						if(lenProd < 8){ for(int j = lenProd; j <= 8; j++) space += " "; 
+							product = product + space; space = ""; 
+						}
+						if(lenCustAvg < 5){ for(int j = lenCustAvg; j <= 5; j++) space += " "; 
+							custAvgStr = space + custAvgStr; space = ""; 
+						}
+						if(lenOtrprodAvg < 16){ for(int j = lenOtrprodAvg; j <= 16; j++) space += " "; 
+							otrprodAvgStr = space + otrprodAvgStr; space = ""; 
+						}
+						if(lenOtrcustAvg < 15){ for(int j = lenOtrcustAvg; j <= 15; j++) space += " "; 
+							otrcustAvgStr = space + otrcustAvgStr; space = ""; 
+						}
+						// print table # 1
+						System.out.println(customer + product + custAvgStr + otrprodAvgStr+otrcustAvgStr );
+					}
+					
+				//for(int i=0;i<custmonth.size();i++)
+				//{
+				//	System.out.println(custmonth.get(i)+"  "+prodmonth.get(i)+"   "+c_p_month.get(i)+"   "+custprodmonthsum.get(i)/custprodmonthcount.get(i));
+				//}
+					//=== table # 2 ====================================================================================
+					boolean ffff=false;
+					int pre=0; int next=0;
+		         	System.out.println("CUSTOMER PRODUCT MONTH  BEFORE_AVG  AFTER_AVG");
+					System.out.println("======== ======= =====  ==========  ========="); 
+					// generage 12 month table for part2
+					for(int i=0; i<custmonth.size();i++)
+				{   customer=custmonth.get(i);
+					product = prodmonth.get(i);
+					ffff=false;
+					for(int z=0;z<prod2.size();z++)
+				    {if(prod2.get(z).equals(product)&&cust2.get(z).equals(customer)) ffff=true;}		
+					if(!ffff)	//initial  12month table
+					{
+						for(int j = 1; j < 13; j++)
+					  {
+					prod2.add(product); cust2.add(customer);
+					month2.add(j);  
+					  }				
+					}
+				}
+					// compute avg for every cus_prod_month
+					for(int i=0;i<prod2.size();i++)
+					{
+						product=prod2.get(i);
+						customer=cust2.get(i);
+						mm=month2.get(i); pre=0;next=0;
+					for(int j=0;j<prodmonth.size();j++)
+					{   
+						if(product.equals(prodmonth.get(j)) && customer.equals(custmonth.get(j)) && (mm-1)==c_p_month.get(j))  //pre month  avg
+							pre=custprodmonthsum.get(j)/custprodmonthcount.get(j);
+						if(product.equals(prodmonth.get(j)) && customer.equals(custmonth.get(j)) &&  (mm+1)==c_p_month.get(j))  //next month avg
+							next=custprodmonthsum.get(j)/custprodmonthcount.get(j);
+					}
+					monthstr = String.valueOf(mm);
+					if(pre==0)prestr="<null>";
+					else prestr = String.valueOf(pre); 
+					if(next==0)nextstr="<null>";
+					else nextstr = String.valueOf(next); 
+					lenCust = customer.getBytes().length;
+					lenProd = product.getBytes().length;
+					lenmonth = monthstr.getBytes().length;		
+					lenpre = prestr.getBytes().length; 
+					lennext= nextstr.getBytes().length;
+					if(lenCust < 8){ for(int j = lenCust; j <= 8; j++) space += " "; 
+					customer = customer + space; space = ""; 
+				    }
+					if(lenProd < 8){ for(int j = lenProd; j <= 7; j++) space += " "; 
+						product = product + space; space = ""; 
+					}
+					if(lenmonth < 4){ for(int j = lenmonth; j <= 4; j++) space += " "; 
+						monthstr = space + monthstr; space = ""; 
+					}
+					if(lenpre < 11){ for(int j = lenpre; j <= 11; j++) space += " "; 
+						prestr = space + prestr; space = ""; 
+					}
+					if(lennext < 10){ for(int j = lennext; j <= 10; j++) space += " "; 
+						nextstr = space + nextstr; space = ""; 
+					}
+					// print table # 2
+					System.out.println(customer+ product + monthstr+ prestr + nextstr );
+					}        
+					//output avg and max  in 12 month
+				/*	for(int i=0; i<prod2.size();i++){
+					System.out.println(prod2.get(i) +"  "+ month2.get(i) +"  ");
+					}  */
+			// part 3======================================================================
+					System.out.println("PRODUCT MONTH  BEFORE_TOT  AFTER_TOT");
+					System.out.println("======= =====  ==========  ========="); 
+            //generate 12 month table for part3
+						for(int i=0; i<prodonly.size();i++)
+					{ 
+						product = prodonly.get(i);
+						ffff=false;
+						for(int z=0;z<prod3.size();z++)
+							{if(prod3.get(z).equals(product)) ffff=true;}		
+						if(!ffff)	//initial  12month table
+						{for(int j = 1; j < 13; j++){
+						prod3.add(product); monthavg3.add(0);
+						month3.add(j);  monthmax3.add(0); 
+						pretotal.add(0);nexttotal.add(0);
+						}
+						}
+					}
+				//compute avg and max for 12month table
+						for(int i=0;i<prod3.size();i++)
+						{
+							product=prod3.get(i);
+							mm=month3.get(i);
+							pre=0;next=0;
+						for(int j=0;j<prodonly.size();j++)
+						{   
+							if(product.equals(prodonly.get(j)) && mm==prod_month.get(j))
+						        { monthavg3.set(i,prod_monthsum.get(j)/prod_monthcount.get(j));
+				                   monthmax3.set(i, prod_monthmax.get(j));
+				                }
+						}
+						}
+					//=== scan 2  =================================================
+					ResultSet aa = stmt.executeQuery("SELECT * FROM Sales");
+					int temp=0;
+						while (aa.next()) // read one row from database table 
+						{
+							product = aa.getString("prod"); 
+							mm = aa.getInt("month"); 
+							quant = aa.getInt("quant"); 
+							//System.out.println(product+"   "+mm+"  "+quant); 
+							for(int i=0;i<prod3.size();i++)
+							{
+					           if(prod3.get(i).equals(product) && month3.get(i)-1==mm)  //pre month total
+                                 if(quant<=monthmax3.get(i)&&quant>=monthavg3.get(i))
+                                 {   temp=pretotal.get(i)+1;
+                                	 pretotal.set(i, temp);
+                                	 }
+					           if(prod3.get(i).equals(product) && month3.get(i)+1==mm)  //next month total
+	                                 if(quant<=monthmax3.get(i)&&quant>=monthavg3.get(i))
+	                                 {   temp=nexttotal.get(i)+1;
+	                                	 nexttotal.set(i, temp);}
+							}
+						}
+				 for(int i=0;i<prod3.size();i++)
+				  { 
+					product=prod3.get(i);
+					mm=month3.get(i);
+					pre=pretotal.get(i);
+					next=nexttotal.get(i);
+					monthstr = String.valueOf(mm);
+					if(pre==0)pretotalstr="<null>";
+					else pretotalstr = String.valueOf(pre); 
+					if(next==0)nexttotalstr="<null>";
+					else nexttotalstr = String.valueOf(next); 
+					lenProd = product.getBytes().length;
+					lenmonth = monthstr.getBytes().length;		
+					lenpretotal = pretotalstr.getBytes().length; 
+					lennexttotal= nexttotalstr.getBytes().length;
+					if(lenProd < 8){ for(int j = lenProd; j <= 7; j++) space += " "; 
+						product = product + space; space = ""; 
+					}
+					if(lenmonth < 4){ for(int j = lenmonth; j <= 4; j++) space += " "; 
+						monthstr = space + monthstr; space = ""; 
+					}
+					if(lenpretotal < 11){ for(int j = lenpretotal; j <= 11; j++) space += " "; 
+						pretotalstr = space + pretotalstr; space = ""; 
+					}
+					if(lennexttotal < 10){ for(int j = lennexttotal; j <= 10; j++) space += " "; 
+						nexttotalstr = space + nexttotalstr; space = ""; 
+					}
+					// print table # 3
+					System.out.println( product + monthstr+ pretotalstr + nexttotalstr );
+					
+					}						
+				}			
+				catch(SQLException e)
+				{
+					System.out.println("Connection URL or username or password errors!");
+					e.printStackTrace();
+				}
+
+			}
+
+		}
